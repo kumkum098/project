@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Canvas & Surfaces */
+  --color-canvas: #010102;
+  --color-surface-1: #0f1011;
+  --color-surface-2: #141516;
+  --color-surface-3: #18191a;
+  --color-surface-4: #191a1b;
+  
+  /* Hairlines */
+  --color-hairline: #23252a;
+  --color-hairline-strong: #34343a;
+  --color-hairline-tertiary: #3e3e44;
+  
+  /* Brand & Accent */
+  --color-primary: #5e6ad2;
+  --color-on-primary: #ffffff;
+  --color-primary-hover: #828fff;
+  --color-primary-focus: #5e69d1;
+  --color-brand-secure: #7a7fad;
+  
+  /* Text Colors */
+  --color-ink: #f7f8f8;
+  --color-ink-muted: #d0d6e0;
+  --color-ink-subtle: #8a8f98;
+  --color-ink-tertiary: #62666d;
+  
+  /* Inverse Colors */
+  --color-inverse-canvas: #ffffff;
+  --color-inverse-surface-1: #f5f6f6;
+  --color-inverse-surface-2: #f6f7f7;
+  --color-inverse-ink: #000000;
+  
+  /* Semantic */
+  --color-semantic-success: #27a644;
+  --color-semantic-overlay: #000000;
+  
+  /* Typography Scale */
+  --font-display: "Inter", "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  
+  /* Spacing Scale */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 96px;
+  
+  /* Border Radius Scale */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 24px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+}
+
+:root {
+  --background: #010102;
+  --foreground: #f7f8f8;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.05px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Base Styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+  color: var(--color-ink);
+}
+
+h1 {
+  font-size: 40px;
+  letter-spacing: -1px;
+}
+
+h2 {
+  font-size: 28px;
+  letter-spacing: -0.6px;
+}
+
+h3 {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+}
+
+p {
+  color: var(--color-ink-muted);
+  line-height: 1.5;
+}
+
+/* Focus Ring Utility */
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary-focus);
+  outline-offset: 2px;
+  opacity: 0.5;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+@layer utilities {
+  .max-w-xs { max-width: 20rem; }
+  .max-w-sm { max-width: 24rem; }
+  .max-w-md { max-width: 28rem; }
+  .max-w-lg { max-width: 32rem; }
+  .max-w-xl { max-width: 36rem; }
+  .max-w-2xl { max-width: 42rem; }
+  .max-w-3xl { max-width: 48rem; }
+  .max-w-4xl { max-width: 56rem; }
+  .max-w-5xl { max-width: 64rem; }
+  .max-w-6xl { max-width: 72rem; }
+  .max-w-7xl { max-width: 80rem; }
+}

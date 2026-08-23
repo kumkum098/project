@@ -1,0 +1,112 @@
+# ==============================================================================
+# Ticket Resale Marketplace - Docker Compose Configuration
+#
+# Services:
+#   1. app      - Next.js web application built with standalone output
+#   2. mongo    - MongoDB 7 database for document storage
+#   3. postgres - PostgreSQL 16 database for relational transactions
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Service 1: Next.js Web Application
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ticket_resale?schema=public
+        MONGODB_URI: mongodb://mongo:27017/ticket_resale
+        NEXTAUTH_URL: http://localhost:3001
+        NEXTAUTH_SECRET: docker-nextauth-secret
+    container_name: ticket-marketplace-app
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      HOSTNAME: 0.0.0.0
+      MONGODB_URI: mongodb://mongo:27017/ticket_resale
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ticket_resale?schema=public
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: docker-nextauth-secret
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-dummy}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-dummy}
+      NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID:-dummy}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma generate && npx prisma db push --accept-data-loss && node server.js"
+    networks:
+      - ticket-network
+
+  # ----------------------------------------------------------------------------
+  # Service 2: MongoDB Database (v7.0)
+  # ----------------------------------------------------------------------------
+  mongo:
+    image: mongo:7
+    container_name: ticket-marketplace-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ticket_resale
+    volumes:
+      # Persistent storage for MongoDB database files
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ticket-network
+
+  # ----------------------------------------------------------------------------
+  # Service 3: PostgreSQL Database (v16)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: ticket-marketplace-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ticket_resale
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      # Persistent storage for PostgreSQL database cluster
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ticket_resale"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ticket-network
+
+# ------------------------------------------------------------------------------
+# Persistent Named Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  mongo_data:
+    driver: local
+    name: ticket_marketplace_mongo_data
+  postgres_data:
+    driver: local
+    name: ticket_marketplace_postgres_data
+
+# ------------------------------------------------------------------------------
+# Bridge Network for Inter-Container Communication
+# ------------------------------------------------------------------------------
+networks:
+  ticket-network:
+    driver: bridge
+    name: ticket_marketplace_network

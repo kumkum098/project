@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Analytics for ticket sales - normalized 3NF design
+model EventCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  tickets     TicketAnalytics[]
+  createdAt   DateTime  @default(now())
+  
+  // Index on name for quick lookups by category name
+  @@index([name])
+}
+
+model TicketAnalytics {
+  id              Int       @id @default(autoincrement())
+  mongoTicketId   String    @unique  // Reference to MongoDB ticket
+  title           String
+  originalPrice   Decimal   @db.Decimal(10, 2)
+  soldPrice       Decimal?  @db.Decimal(10, 2)
+  categoryId      Int
+  // Foreign Key to EventCategory
+  category        EventCategory @relation(fields: [categoryId], references: [id])
+  venueId         Int
+  // Foreign Key to Venue
+  venue           Venue     @relation(fields: [venueId], references: [id])
+  eventDate       DateTime
+  soldAt          DateTime?
+  status          TicketStatus @default(LISTED)
+  views           Int       @default(0)
+  sellerId        Int
+  // Foreign Key to SellerProfile (seller)
+  seller          SellerProfile @relation("SellerTickets", fields: [sellerId], references: [id])
+  buyerId         Int?
+  // Foreign Key to SellerProfile (buyer)
+  buyer           SellerProfile? @relation("BuyerTickets", fields: [buyerId], references: [id])
+  saleRecord      SaleRecord?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Indexes for frequently filtered or joined columns
+  @@index([categoryId])
+  @@index([venueId])
+  @@index([eventDate])
+  @@index([status])
+  @@index([sellerId])
+}
+
+enum TicketStatus {
+  LISTED
+  SOLD
+  EXPIRED
+  CANCELLED
+}
+
+model Venue {
+  id        Int       @id @default(autoincrement())
+  name      String    
+  city      String
+  state     String?
+  country   String    @default("India")
+  tickets   TicketAnalytics[]
+  createdAt DateTime  @default(now())
+  
+  // Composite unique constraint ensures no duplicate venues
+  @@unique([name, city])
+  // Index on city for location-based searches
+  @@index([city])
+}
+
+model SellerProfile {
+  id              Int       @id @default(autoincrement())
+  mongoUserId     String    @unique
+  displayName     String
+  email           String    @unique
+  trustScore      Decimal   @db.Decimal(3, 1)
+  totalSales      Int       @default(0)
+  totalRevenue    Decimal   @default(0) @db.Decimal(12, 2)
+  ticketsSold     TicketAnalytics[] @relation("SellerTickets")
+  ticketsBought   TicketAnalytics[] @relation("BuyerTickets")
+  salesRecords    SaleRecord[]      @relation("SellerSales")
+  purchaseRecords SaleRecord[]      @relation("BuyerPurchases")
+  auditLogs       AuditLog[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Indexes for sorting/filtering top sellers
+  @@index([trustScore])
+  @@index([totalSales])
+}
+
+model SaleRecord {
+  id              Int       @id @default(autoincrement())
+  ticketId        Int       @unique
+  // Foreign Key to TicketAnalytics (1-to-1)
+  ticket          TicketAnalytics @relation(fields: [ticketId], references: [id])
+  sellerId        Int
+  // Foreign Key to SellerProfile
+  seller          SellerProfile @relation("SellerSales", fields: [sellerId], references: [id])
+  buyerId         Int
+  // Foreign Key to SellerProfile
+  buyer           SellerProfile @relation("BuyerPurchases", fields: [buyerId], references: [id])
+  salePrice       Decimal   @db.Decimal(10, 2)
+  platformFee     Decimal   @db.Decimal(10, 2)
+  sellerAmount    Decimal   @db.Decimal(10, 2)
+  paymentMethod   String    @default("razorpay")
+  transactionRef  String    @unique
+  completedAt     DateTime  @default(now())
+  
+  // Indexes for sales reporting queries
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([completedAt])
+}
+
+model AuditLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  // Foreign Key to SellerProfile
+  user        SellerProfile @relation(fields: [userId], references: [id])
+  action      String
+  entityType  String
+  entityId    String
+  oldValue    String?   @db.Text
+  newValue    String?   @db.Text
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+  
+  // Indexes for retrieving logs by user or action
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
